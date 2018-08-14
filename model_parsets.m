@@ -59,10 +59,6 @@ switch s
         % feedback  excitation
         par.w_ef = 0.5; % arbitrary set to half of feedforward input
         par.w_if = par.w_ef; 
-              
-        % surround feedback  excitation
-        par.w_efs = 0;
-        par.w_ifs = 0;
         
         % firing threshold
         par.t_e = 4;
@@ -87,42 +83,50 @@ switch s
         par.gi_a = 1;
         par.gf_a = 1;
         par.gj_a = 1;
-        
-        % surround retinal input
-        par.w_ers = 0;
-        par.w_irs = 0;
-        
+                
         par.matchlva2v1 = true;
 
     case 1 % solution with non-local surround inhibition
-        par.w_esi = 0.494;
+        % par.w_ise = 0; % no surround input to local inhibitory population
+        par.w_esi = 0.62;
+        par.w_ese = 0.18;
         par.w_ie = 0.491;
         par.w_ei = 1.14;
-        par.w_ese = 0.103;
+        
+        % to normalize response
         par.ge = 245;
         par.gi = 8.07;  
-        par.matchlva2v1 = true;
-    case 2 % solution with local surround inhibition
-        % set
-        par.w_ise = 0.75;
-        % optimized
-        par.w_ie = 0.053;
-        par.w_ei = 0.93;
-        par.w_ese = 0.65;
-        % normalized
-        par.ge = 101;
-        par.gi = 13.4;
-        par.matchlva2v1 = true;
+    case 2    % solution with local surround inhibition
+        par.w_ise = 1.0;
+        par.w_esi = 0; % no inhibition from surrounding inhibitory population
+        par.w_ese = 1.0;
+        par.w_ie = 0;
+        par.w_ei = 0.91;
 
-    case 10
-        par.w_esi = mean([0.5 0]);
-        par.w_ie = mean([0.49 0.053]);
-        par.w_ei = mean([1.13 0.93]);
-        par.w_ese = mean([0.103 0.65]);
-        par.ge = mean([245 101]);
-        par.gi = mean([8.07 13.4]);  
-        par.matchlva2v1 = true;
- 
+        % to normalize response
+        par.ge = 94;
+        par.gi = 14;
+
+    case 3 % solution with non-local surround inhibition and sigmoid
+        par.fi = @sigmoid;
+        par.w_er = 4.9 ;
+        par.t_e = 10.0;
+        par.t_i = 12.5;
+        par.w_ie = 1.8;
+        par.w_ei = 2.8;
+        par.w_esi = 51;
+        par.w_ese = 2.9;
+
+        % to normalize response
+        par.ge = 210;
+        par.gi = 26;
+    case 10 % used for track_solutions (mean of case 1 and 2)
+        par.w_esi = mean([0.62 0]);
+        par.w_ie = mean([0.491 0]);
+        par.w_ei = mean([1.14 0.91]);
+        par.w_ese = mean([0.18 1.0]);
+        par.ge = mean([245 94]);
+        par.gi = mean([8.07 4]);  
 end
 
 

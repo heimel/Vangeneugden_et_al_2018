@@ -55,16 +55,17 @@ warning('Off','MATLAB:legend:IgnoringExtraEntries');
 % Simulation parameters
 simpar.dt = 0.001; % s, simulation time step
 simpar.r_onsetwidth = 0.1; %s
-simpar.noise = 0; % for robust optimization 0.2
 switch simmode
     case 'figures'
         simpar.max_t = 1; % s, simulation time
         simpar.stim_onset = 0.5; %s
         simpar.stim_offset = 1; %s
+        simpar.noise = 0; 
     case 'optim'
         simpar.max_t = 0.5; % s, simulation time
         simpar.stim_onset = 0; %s
         simpar.stim_offset = 0.5; %s
+        simpar.noise = 0; % 0.2 for more robust optimization 
 end
 simpar.nsamples = ceil(simpar.max_t/simpar.dt);
 
@@ -72,8 +73,9 @@ onset_i = round(simpar.stim_onset/simpar.dt)+1;
 offset_i =  round(simpar.stim_offset/simpar.dt)+1;
 
 simpar.R = zeros(simpar.nsamples,1);
-simpar.R(onset_i:min(simpar.nsamples,offset_i)) = 1;
-simpar.R(onset_i:onset_i+round(simpar.r_onsetwidth/simpar.dt)) = linspace(0,1,round(simpar.r_onsetwidth/simpar.dt)+1);
+contrast = 1;
+simpar.R(onset_i:min(simpar.nsamples,offset_i)) = contrast;
+simpar.R(onset_i:onset_i+round(simpar.r_onsetwidth/simpar.dt)) = linspace(0,contrast,round(simpar.r_onsetwidth/simpar.dt)+1);
 
 disp(simpar);
 
@@ -406,6 +408,14 @@ if isfield(par,'matchlva2v1') && par.matchlva2v1
     par = make_matchlva2v1(par);
 end
 
+if 1 % link all feedforward and feedback strengths
+    par.w_ir = par.w_er;
+    par.w_fe = par.w_er;
+    par.w_je = par.w_er;
+    par.w_ef = 0.5 * par.w_er;
+    par.w_if = 0.5 * par.w_er;
+end
+
 delta_e = simpar.dt/par.tau_e;
 delta_i = simpar.dt/par.tau_i;
 delta_f = simpar.dt/par.tau_f;
@@ -435,9 +445,7 @@ for t = 3:nsamples
         - par.w_ei * I(t-1) ...
         + par.w_ese * par.sr * E(t-1) ...
         - par.w_esi * par.sr * I(t-1) ...
-        + par.w_ers * par.sr * R(max(1,t-1-rt_delay_sample)) ...
         + par.w_ef * par.fb * F(t-1) ...
-        + par.w_efs * par.sr * par.fb * F(t-1) ...
         + simpar.noise*(rand(1)-0.5) ...
         ));
     
@@ -450,9 +458,7 @@ for t = 3:nsamples
         - par.w_ii * I(t-1) ...
         + par.w_ise * par.sr * E(t-1) ...
         - par.w_isi * par.sr * I(t-1) ...
-        + par.w_irs * par.sr * R(max(1,t-1-rt_delay_sample)) ...
         + par.w_if * par.fb * F(t-1) ...
-        + par.w_ifs * par.sr * par.fb * F(t-1) ...
         ));
     
     % LVA excitatory neurons
@@ -462,17 +468,15 @@ for t = 3:nsamples
         + par.w_fe * E(t-1) ...
         + par.w_ff * F(t-1) ...
         - par.w_fj * J(t-1) ...
-        + par.w_fsf * par.sr * F(t-1) ...
         );
-    
+        
     % LVA inhibitory neurons
     J(t) = (1-delta_j)*J(t-1) + ...
         delta_j * gj * fi((  ...
         - t_j ...
-        + par.w_ge * E(t-1) ...
-        + par.w_gf * F(t-1) ...
-        - par.w_gj * J(t-1) ...
-        + par.w_gsf * par.sr * F(t-1) ...
+        + par.w_je * E(t-1) ...
+        + par.w_jf * F(t-1) ...
+        - par.w_jj * J(t-1) ...
         ));
     
 end % timestep t
@@ -534,17 +538,14 @@ obs.se = std(E(round(end/2):end));
 
 function par = make_matchlva2v1(par)
     par.w_fe = par.w_er;
-    par.w_ge = par.w_ir;
-    par.w_gf = par.w_ie;
+    par.w_je = par.w_ir;
+    par.w_jf = par.w_ie;
     par.w_fj = par.w_ei;
     par.t_f = par.t_e;
     par.t_j = par.t_i;
     par.gf = par.ge;
     par.gj = par.gi;
     par.tau_j = par.tau_i;
-    par.w_fsf = par.w_ese;
-    par.w_gsf = par.w_ise;
-    par.w_gj = par.w_ii;
+    par.w_jj = par.w_ii;
     par.w_ff = par.w_ee;
-
 
