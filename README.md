@@ -10,7 +10,9 @@ options to produce some of the figures from the paper. Other
 parameters can be selected from the list in model_parsets.m.
 
 Type 
+
     help feedback_model
+
 at the Matlab prompt for usage information
 
 The original code for this model can be downloaded from github.com/heimel/vangeneugden_et_al_2018
