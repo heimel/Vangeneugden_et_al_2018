@@ -76,6 +76,7 @@ simpar.R = zeros(simpar.nsamples,1);
 contrast = 1;
 simpar.R(onset_i:min(simpar.nsamples,offset_i)) = contrast;
 simpar.R(onset_i:onset_i+round(simpar.r_onsetwidth/simpar.dt)) = linspace(0,contrast,round(simpar.r_onsetwidth/simpar.dt)+1);
+simpar.show_LVA = true;
 
 disp(simpar);
 
@@ -245,11 +246,12 @@ for aw = 1:2
                 E(i) = obs.re;
                 I(i) = obs.ri;
                 F(i) = obs.rf;
-                
+                J(i) = obs.rj;
             end
             plot(contrast*100,E,'k-');
             plot(contrast*100,I,'r-');
             plot(contrast*100,F,'g-');
+            plot(contrast*100,J,'m-');
             xlim([0 120]);
             ylabel('Response (a.u.)');
             xlabel('Contrast (%)');
@@ -483,58 +485,58 @@ end % timestep t
 
 if h~=0
     figure(h);
-    
     t = (1:length(R))*dt -simpar.stim_onset;
-    c = 'ck';
-    
-    subplot(2,2,par.sr+1);
-    box off
-    hold on
-    plot(t,E,['-' c(par.fb+1)]);
-    axis square
-    ylim([0 1.4]);
-    if par.sr==0
-        ylabel('Pyr Response (a.u.)');
+
+    if ~simpar.show_LVA
+        colors = {[1 255 255]/255,[0 0 0]};
+        subplot(2,2,par.sr+1);
+        plot_timecourse(t,E,par,colors,'E')
+        
+        colors = {[1 255 255]/255,[255 10 10]/255};
+        subplot(2,2,par.sr+1+2);
+        plot_timecourse(t,I,par,colors,'I')
+        
     else
-        legend('No feedback','With feedback');
-        legend boxoff
+        colors = {[1 255 255]/255,[0 1 0]};
+        subplot(2,2,par.sr+1);
+        plot_timecourse(t,F,par,colors,'F')
+        
+        colors = {[1 255 255]/255,[1 0 1]};
+        subplot(2,2,par.sr+1+2);
+        plot_timecourse(t,J,par,colors,'J')
     end
-    title(['fb=' num2str(par.fb)  ',' 'sr=' num2str(par.sr) ]);
-    xlim( [-0.5 0.5]);
-    set(gca,'xtick',-0.4:0.2:0.4);
-    set(gca,'xticklabel',{});
-    set(gca,'ytick',0:0.2:1.4);
-    set(gca,'yticklabel',{'0','','0.4','','0.8','','1.2',''});
-    
-    c = 'mr';
-    
-    subplot(2,2,par.sr+1+2);
-    hold on
-    box off
-    plot(t,I,['-' c(par.fb+1)]);
-    axis square
-    xlabel('Time (s)');
-    if par.sr==0
-        ylabel('Inh Response (a.u.)');
-    else
-        legend('No feedback','With feedback');
-        legend boxoff
-    end
-    title(['fb=' num2str(par.fb)  ',' 'sr=' num2str(par.sr) ]);
-    xlim( [-0.5 0.5]);
-    ylim([0 1.4]);
-    set(gca,'xtick',-0.4:0.2:0.4);
-    set(gca,'xticklabel',{'-0.4','','0','','0.4'});
-    set(gca,'ytick',0:0.2:1.4);
-    set(gca,'yticklabel',{'0','','0.4','','0.8','','1.2',''});
-    
 end
 
 % take second half of simulated time
 obs.re = mean(E(round(end/2):end));
 obs.ri = mean(I(round(end/2):end));
 obs.rf = mean(F(round(end/2):end));
+obs.rj = mean(J(round(end/2):end));
 obs.se = std(E(round(end/2):end));
+
+function plot_timecourse(t,r,par,colors,popname)
+
+    
+    box off
+    hold on
+    plot(t,r,'-','color',colors{par.fb+1});
+    axis square
+    ylim([0 1.4]);
+    if par.sr==0
+        ylabel([popname ' Activity (a.u.)']);
+    else
+        legend('No feedback','With feedback');
+        legend boxoff
+    end
+    title(['fb=' num2str(par.fb)  ',' 'sr=' num2str(par.sr) ]);
+    xlim( [-0.5 0.5]);
+    xlabel('Time (s)');
+    set(gca,'xtick',-0.4:0.2:0.4);
+    set(gca,'xticklabel',{});
+    set(gca,'ytick',0:0.2:1.4);
+    set(gca,'yticklabel',{'0','','0.4','','0.8','','1.2',''});
+
+
 
 function par = make_matchlva2v1(par)
     par.w_fe = par.w_er;
