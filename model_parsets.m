@@ -127,6 +127,21 @@ switch s
         par.w_ese = mean([0.18 1.0]);
         par.ge = mean([245 94]);
         par.gi = mean([8.07 4]);  
+        
+        
+    case 123 % experimental model to play with parameters
+        
+          % par.w_ise = 0; % no surround input to local inhibitory population
+        par.w_esi = 0.62;
+        par.w_ese = 0.18;
+        par.w_ie = 0.491;
+        par.w_ei = 1.14;
+        
+        % to normalize response
+        par.ge = 245;
+        par.gi = 8.07;  
+        
+        par.w_ii = 0.6;
 end
 
 

@@ -1,9 +1,7 @@
 # Model for Vangeneugden et al. 2018
 
 This folder contains a simulation for the model described in 
-Vangeneugden et al. 2018 manuscript "Feedback increases 
-surround suppression in awake mouse V1". The simulation is 
-written in Matlab and runs in Matlab and Octave.
+Vangeneugden et al. 2019 manuscript "Activity in lateral visual areas contributes to surround suppression in awake mouse V1". The simulation is written in Matlab and runs in Matlab and Octave.
 
 The main function is feedback_model.m and can be run without 
 options to produce some of the figures from the paper. Other 

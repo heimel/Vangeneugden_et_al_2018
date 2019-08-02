@@ -55,6 +55,7 @@ warning('Off','MATLAB:legend:IgnoringExtraEntries');
 % Simulation parameters
 simpar.dt = 0.001; % s, simulation time step
 simpar.r_onsetwidth = 0.1; %s
+simpar.integrationtime = 'optimization'; % experiment / optimization
 switch simmode
     case 'figures'
         simpar.max_t = 1; % s, simulation time
@@ -76,7 +77,7 @@ simpar.R = zeros(simpar.nsamples,1);
 contrast = 1;
 simpar.R(onset_i:min(simpar.nsamples,offset_i)) = contrast;
 simpar.R(onset_i:onset_i+round(simpar.r_onsetwidth/simpar.dt)) = linspace(0,contrast,round(simpar.r_onsetwidth/simpar.dt)+1);
-simpar.show_LVA = true;
+simpar.show_LVA = false;
 
 disp(simpar);
 
@@ -134,8 +135,8 @@ if verbose % extra paper figures
     % bar plot measured vs model
     subplot(2,2,1);
     hold on
-    bar([0.5 1.8 ],[mea.si(1,2)  sim.si(1,2) ],0.35,'k');
-    bar([1 2.3 ],[mea.si(1,1)  sim.si(1,1) ],0.35,'b');
+    bar([0.5 1.8],[mea.si(1,2)  sim.si(1,2) ],0.35,'k');
+    bar([1   2.3],[mea.si(1,1)  sim.si(1,1) ],0.35,'b');
     ylabel('SI')
     ylim([0 0.6]);
     set(gca,'ytick',0:0.1:0.6);
@@ -225,7 +226,7 @@ I = zeros(size(contrast));
 F = zeros(size(contrast));
 
 for aw = 1:2
-    figure('Name',['Awake=' num2str(aw)]);
+    figure('Name',['Contrast Awake=' num2str(aw)],'NumberTitle','off');
     for fb = 1:2
         par.fb = fb-1;
         
@@ -284,7 +285,7 @@ I = zeros(2,2,2);
 
 for aw = 1:2
     if verbose
-        fig = figure('Name',['Awake=' num2str(aw)]);
+        fig = figure('Name',['Dynamics Awake=' num2str(aw)],'NumberTitle','off');
     else
         fig = 0;
     end
@@ -338,6 +339,16 @@ err = err + 0.2*(E(1,2,2)-E(2,2,2))^2 ;
 
 % awake and anesthetized LVA surround responses should be similar
 err = err + 0.2*(F(1,2,2)-F(2,2,2))^2 ;
+
+% I at 100% contrast should be 1.2 I at 50% contrast, from Montijn data
+par.aw = 1;
+par.fb = 1;
+par.sr = 1;
+simpar.R = 0.5 * simpar.R;
+halfcontrast = compute_dynamics( par,simpar);
+err = err + 0.2*abs(obs(2,2,2).ri/halfcontrast.ri - 1.21);
+err = err + 0.2*abs(obs(2,2,2).re/halfcontrast.re - 1.05);
+%err = err + zerocontrast.re^2;
 
 % punish response to blank stimulus
 par.aw = 1;
@@ -508,11 +519,20 @@ if h~=0
 end
 
 % take second half of simulated time
-obs.re = mean(E(round(end/2):end));
-obs.ri = mean(I(round(end/2):end));
-obs.rf = mean(F(round(end/2):end));
-obs.rj = mean(J(round(end/2):end));
-obs.se = std(E(round(end/2):end));
+switch simpar.integrationtime
+    case 'experiment'
+        startind = (simpar.stim_onset+0.05)/dt; % 50 ms after stimonset
+        stopind = (simpar.stim_onset+0.5)/dt; % 50 ms after stimonset
+    case 'optimization'
+        startind = length(E)-0.25/dt; % last 0.25 s
+        stopind = length(E);
+end
+
+obs.re = mean(E(startind:stopind));
+obs.ri = mean(I(startind:stopind));
+obs.rf = mean(F(startind:stopind));
+obs.rj = mean(J(startind:stopind));
+obs.se = std(E(startind:stopind));
 
 function plot_timecourse(t,r,par,colors,popname)
 
@@ -535,7 +555,6 @@ function plot_timecourse(t,r,par,colors,popname)
     set(gca,'xticklabel',{});
     set(gca,'ytick',0:0.2:1.4);
     set(gca,'yticklabel',{'0','','0.4','','0.8','','1.2',''});
-
 
 
 function par = make_matchlva2v1(par)
